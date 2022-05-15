@@ -73,7 +73,7 @@ margin_bottom = 80.0
 size_flags_horizontal = 3
 theme = SubResource( 2 )
 custom_fonts/normal_font = SubResource( 3 )
-text = "Black's Score"
+text = "White's Score"
 fit_content_height = true
 
 [node name="white-score" type="RichTextLabel" parent="Control/VBoxContainer"]
@@ -93,7 +93,7 @@ margin_bottom = 136.0
 size_flags_horizontal = 3
 theme = SubResource( 2 )
 custom_fonts/normal_font = SubResource( 3 )
-text = "White's Score"
+text = "Blacks Score"
 fit_content_height = true
 
 [node name="black-score" type="RichTextLabel" parent="Control/VBoxContainer"]

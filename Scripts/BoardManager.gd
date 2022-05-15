@@ -5,6 +5,7 @@ var neighbors = {}
 enum {EMPTY, BLACK, WHITE} # used to represent the board
 enum {L, UL, UR, R, DR, DL} # used to represent the directions of neighbors
 
+
 func _ready():
 	init_board()
 	# test_board()

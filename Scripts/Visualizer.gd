@@ -12,28 +12,42 @@ var state
 var history = []
 var historyIndex = 0
 var max_depth = 2
+var time_start = 0
+var time_now = 0
 
 func _ready():
 	draw_complete_board(BoardManager.current_board)
 	state = State.new(BoardManager.current_board, 0, 0)
+	history.append(state)
 
 func play():
-	history.append(state)
-	historyIndex = historyIndex + 1
-	
-	
+
+	time_start = OS.get_ticks_msec()
+	# Play the AI's turn
 	open_state(state, max_depth)
-	print(state.children)
 	state.evaluate()
-	#state.print_eval()
-	state = state.children[state.best_index]
+	state = state.best_child
+	time_now = OS.get_ticks_msec()
+	var time_elapsed = time_now - time_start
+	print(time_elapsed)
 	
+
+	# Add AI state to history
+	history.append(state)
+	
+	
+	# Play the Random's turn
 	var res = Successor.calculate_successor(state, BoardManager.BLACK)
 	rng.randomize()
 	var rand = rng.randi_range(0, len(res) - 1)
 	state = res[rand]
-		 
+	
+	# Add random state to history and updating the game
+	history.append(state)
+	historyIndex = len(history) - 1
 	updtae_game(state)
+	
+	
 	
 func open_state(state: State, depth: int):
 	
@@ -68,6 +82,8 @@ func _input(ev):
 		if (historyIndex < len(history) - 1):
 			historyIndex = historyIndex + 1
 			updtae_game(history[historyIndex])
+		else:
+			play()
 	if Input.is_key_pressed(KEY_LEFT):
 		if (historyIndex > 0):
 			historyIndex = historyIndex - 1
