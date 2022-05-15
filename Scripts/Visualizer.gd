@@ -2,30 +2,61 @@ extends Node
 
 export var pieces_path : NodePath
 onready var pieces = get_node(pieces_path)
+onready var white_score = get_node('../Control/VBoxContainer/white-score')
+onready var black_score = get_node('../Control/VBoxContainer/black-score')
+onready var move_number = get_node('../Control/VBoxContainer/move-number')
 var white_piece = preload("res://Scenes/White Piece.tscn")
 var black_piece = preload("res://Scenes/Black Piece.tscn")
+var rng = RandomNumberGenerator.new()
+var state
 var history = []
 var historyIndex = 0
+var max_depth = 2
+
 func _ready():
-	var rng = RandomNumberGenerator.new()
 	draw_complete_board(BoardManager.current_board)
-	var state = State.new(BoardManager.current_board, 0, 0)
-	for i in range(100):
-		history.append(state)
-		historyIndex = historyIndex + 1
-		var res
-		var rand
-		if i % 2 == 0:
-			res = Successor.calculate_successor(state, BoardManager.WHITE)
-		else:
-			res = Successor.calculate_successor(state, BoardManager.BLACK)
-			
-		rand = rng.randi_range(0, len(res) - 1)
-		state = res[rand]
+	state = State.new(BoardManager.current_board, 0, 0)
+
+func play():
+	history.append(state)
+	historyIndex = historyIndex + 1
+	
+	
+	open_state(state, max_depth)
+	print(state.children)
+	state.evaluate()
+	#state.print_eval()
+	state = state.children[state.best_index]
+	
+	var res = Successor.calculate_successor(state, BoardManager.BLACK)
+	rng.randomize()
+	var rand = rng.randi_range(0, len(res) - 1)
+	state = res[rand]
+		 
+	updtae_game(state)
+	
+func open_state(state: State, depth: int):
+	
+	state.depth = max_depth - depth
+	if depth <= 0:
+		return
+	
+	
+	if state.depth % 2 == 0:
+		state.children = Successor.calculate_successor(state, BoardManager.WHITE)
+	else:
+		state.children = Successor.calculate_successor(state, BoardManager.BLACK)
+	
+
+	for child in state.children:
+		open_state(child, depth - 1)
 		
+func updtae_game(state: State):
 	update_board(state.board)
-	
-	
+	white_score.text = str(state.white_score)
+	black_score.text = str(state.black_score)
+	move_number.text = str(historyIndex)
+		
 func update_board(new_board):
 	for child in pieces.get_children():
 		child.queue_free()
@@ -36,12 +67,14 @@ func _input(ev):
 	if Input.is_key_pressed(KEY_RIGHT):
 		if (historyIndex < len(history) - 1):
 			historyIndex = historyIndex + 1
-			update_board(history[historyIndex].board)
+			updtae_game(history[historyIndex])
 	if Input.is_key_pressed(KEY_LEFT):
 		if (historyIndex > 0):
 			historyIndex = historyIndex - 1
-			update_board(history[historyIndex].board)
-		
+			updtae_game(history[historyIndex])
+	if Input.is_key_pressed(KEY_ENTER):
+		play()
+			
 func draw_complete_board(board):
 	var coordinates = Vector3(0, 0, 0)
 	for cell_number in range(len(board)):

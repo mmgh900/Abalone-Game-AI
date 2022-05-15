@@ -7,8 +7,6 @@ enum {L, UL, UR, R, DR, DL} # used to represent the directions of neighbors
 
 func _ready():
 	init_board()
-
-	
 	# test_board()
 
 func init_board():
@@ -31,10 +29,6 @@ func init_board():
 		neighbors[cell_number] = []
 		for neighbor in adjacency_lists[str(cell_number)]:
 			neighbors[cell_number].append(int(neighbor))
-		
-		
-			
-			
 		
 func check_cluster(board, cell_number, piece, cluster_length, cluster_direction):
 	if board[cell_number] != piece:
