@@ -13,7 +13,7 @@ var rng = RandomNumberGenerator.new()
 var eval
 var alpha = -INF
 var beta = +INF
-
+var pure_eval
 	
 const gravity = [
 			4, 4, 4, 4, 4,
@@ -33,6 +33,8 @@ func _init(board, black_score, white_score):
 	
 	for cell in board:
 		self.board.append(cell)
+	
+	calculate_pure_eval()
 
 func increase_score(piece):
 	if piece == BoardManager.BLACK:
@@ -40,25 +42,27 @@ func increase_score(piece):
 	elif piece == BoardManager.WHITE:
 		self.white_score += 1
 
+func calculate_pure_eval():
+	var score_difference = white_score - black_score
+	var sum_gravity = 0
+	rng.randomize()
+	var rand_epslion = rng.randf()
+	for i in range(len(board)):
+		if board[i] == BoardManager.BLACK:
+			sum_gravity += gravity[i]
+		elif board[i] == BoardManager.WHITE:
+			sum_gravity -= gravity[i]
+
+	pure_eval = score_difference + sum_gravity * 0.1
+	
 func evaluate():
 	if children == null: #if node is a leaf node
-		var score_difference = white_score - black_score
-		var sum_gravity = 0
-		rng.randomize()
-		var rand_epslion = rng.randf()
-		for i in range(len(board)):
-			if board[i] == BoardManager.BLACK:
-				sum_gravity += gravity[i]
-			elif board[i] == BoardManager.WHITE:
-				sum_gravity -= gravity[i]
-
-		eval = score_difference * 100 + sum_gravity
-		
+		eval = pure_eval
 	elif depth % 2 == 0:
 		eval = -INF
 		
-		for child in self.children:
-	
+		for i in len(children):
+			var child = children[i]
 			child.alpha = alpha
 			child.beta = beta
 			var value = child.evaluate()
@@ -66,15 +70,15 @@ func evaluate():
 			if value > eval:
 				eval = value
 				best_child = child
-			
 				
 			alpha = max(alpha, eval)
 			if beta <= alpha:
 				break
 	else:
 		eval = +INF
-		for child in self.children:
-			
+		for i in len(children):
+			var child = children[i]
+		
 			child.alpha = alpha
 			child.beta = beta
 			var value = child.evaluate()

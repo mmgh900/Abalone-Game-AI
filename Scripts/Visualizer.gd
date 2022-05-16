@@ -5,71 +5,21 @@ onready var pieces = get_node(pieces_path)
 onready var white_score = get_node('../Control/VBoxContainer/white-score')
 onready var black_score = get_node('../Control/VBoxContainer/black-score')
 onready var move_number = get_node('../Control/VBoxContainer/move-number')
+
+
 var white_piece = preload("res://Scenes/White Piece.tscn")
 var black_piece = preload("res://Scenes/Black Piece.tscn")
-var rng = RandomNumberGenerator.new()
-var state
-var history = []
-var historyIndex = 0
-var max_depth = 2
-var time_start = 0
-var time_now = 0
+
+
 
 func _ready():
-	draw_complete_board(BoardManager.current_board)
-	state = State.new(BoardManager.current_board, 0, 0)
-	history.append(state)
-
-func play():
-
-	time_start = OS.get_ticks_msec()
-	# Play the AI's turn
-	open_state(state, max_depth)
-	state.evaluate()
-	state = state.best_child
-	time_now = OS.get_ticks_msec()
-	var time_elapsed = time_now - time_start
-	print(time_elapsed)
+	update_game(BoardManager.current_state)
 	
-
-	# Add AI state to history
-	history.append(state)
-	
-	
-	# Play the Random's turn
-	var res = Successor.calculate_successor(state, BoardManager.BLACK)
-	rng.randomize()
-	var rand = rng.randi_range(0, len(res) - 1)
-	state = res[rand]
-	
-	# Add random state to history and updating the game
-	history.append(state)
-	historyIndex = len(history) - 1
-	updtae_game(state)
-	
-	
-	
-func open_state(state: State, depth: int):
-	
-	state.depth = max_depth - depth
-	if depth <= 0:
-		return
-	
-	
-	if state.depth % 2 == 0:
-		state.children = Successor.calculate_successor(state, BoardManager.WHITE)
-	else:
-		state.children = Successor.calculate_successor(state, BoardManager.BLACK)
-	
-
-	for child in state.children:
-		open_state(child, depth - 1)
-		
-func updtae_game(state: State):
+func update_game(state: State):
 	update_board(state.board)
 	white_score.text = str(state.white_score)
 	black_score.text = str(state.black_score)
-	move_number.text = str(historyIndex)
+	move_number.text = str(BoardManager.historyIndex)
 		
 func update_board(new_board):
 	for child in pieces.get_children():
@@ -77,19 +27,21 @@ func update_board(new_board):
 	
 	draw_complete_board(new_board)
 	
-func _input(ev):
+func _input(_ev):
 	if Input.is_key_pressed(KEY_RIGHT):
-		if (historyIndex < len(history) - 1):
-			historyIndex = historyIndex + 1
-			updtae_game(history[historyIndex])
-		else:
-			play()
+		if (BoardManager.historyIndex < len(BoardManager.history) - 1):
+			BoardManager.historyIndex = BoardManager.historyIndex + 1
+			update_game(BoardManager.history[BoardManager.historyIndex])
+
 	if Input.is_key_pressed(KEY_LEFT):
-		if (historyIndex > 0):
-			historyIndex = historyIndex - 1
-			updtae_game(history[historyIndex])
+		if (BoardManager.historyIndex > 0):
+			BoardManager.historyIndex = BoardManager.historyIndex - 1
+			update_game(BoardManager.history[BoardManager.historyIndex])
 	if Input.is_key_pressed(KEY_ENTER):
-		play()
+		BoardManager.play()
+		update_game(BoardManager.history[BoardManager.historyIndex])
+
+	
 			
 func draw_complete_board(board):
 	var coordinates = Vector3(0, 0, 0)

@@ -1,6 +1,16 @@
 extends Node
 
-var current_board = []
+const max_depth: int = 2
+const beam_search_k: int = 100
+var rng = RandomNumberGenerator.new()
+
+
+var history: Array = []
+var historyIndex: int = 0
+var time_start: float = 0
+var time_now: float = 0
+
+var current_state: State
 var neighbors = {}
 enum {EMPTY, BLACK, WHITE} # used to represent the board
 enum {L, UL, UR, R, DR, DL} # used to represent the directions of neighbors
@@ -8,7 +18,6 @@ enum {L, UL, UR, R, DR, DL} # used to represent the directions of neighbors
 
 func _ready():
 	init_board()
-	# test_board()
 
 func init_board():
 	var file = File.new()
@@ -16,7 +25,7 @@ func init_board():
 	var raw_data = file.get_as_text()
 	var adjacency_lists = parse_json(raw_data)
 	file.close() # reading the file that specifies the adjacency lists and converting it to a dictionary
-	
+	var board = []
 	for cell_number in range(61):
 		var cell_value = EMPTY
 		if (cell_number >= 0 and cell_number <= 10) or (cell_number >= 13 and cell_number <= 15):
@@ -26,11 +35,14 @@ func init_board():
 		else:
 			cell_value = EMPTY # determining the value of the current board cell
 		
-		current_board.append(cell_value)
+		
+		board.append(cell_value)
 		neighbors[cell_number] = []
 		for neighbor in adjacency_lists[str(cell_number)]:
 			neighbors[cell_number].append(int(neighbor))
-		
+	current_state = State.new(board, 0, 0)	
+	history.append(current_state)
+	
 func check_cluster(board, cell_number, piece, cluster_length, cluster_direction):
 	if board[cell_number] != piece:
 		return false
@@ -82,28 +94,50 @@ func get_stats(board, cell_number, piece, cluster_length, cluster_direction):
 			"piece has space" : piece_has_space, "opponent has space" : opponent_has_space, 
 			"is sandwich" : is_sandwich}
 	
-func test_board():
-	for i in range(61):
-		if neighbors[i][L] != -1: # check the correctness of left neighbors
-			if neighbors[neighbors[i][L]][R] != i:
-				print("Incorrect Left Neighbor: ", i, ", ", neighbors[neighbors[i][L]][R])
-				
-		if neighbors[i][UL] != -1: # check the correctness of up left neighbors
-			if neighbors[neighbors[i][UL]][DR] != i:
-				print("Incorrect Up Left Neighbor: ", i, ", ", neighbors[neighbors[i][UL]][DR])
-		
-		if neighbors[i][UR] != -1: # check the correctness of up right neighbors
-			if neighbors[neighbors[i][UR]][DL] != i:
-				print("Incorrect Up Right Neighbor: ", i, ", ", neighbors[neighbors[i][UR]][DL])
-				
-		if neighbors[i][R] != -1: # check the correctness of right neighbors
-			if neighbors[neighbors[i][R]][L] != i:
-				print("Incorrect Right Neighbor: ", i, ", ", neighbors[neighbors[i][R]][L])
-				
-		if neighbors[i][DR] != -1: # check the correctness of down right neighbors
-			if neighbors[neighbors[i][DR]][UL] != i:
-				print("Incorrect Down Right Neighbor: ", i, ", ", neighbors[neighbors[i][DR]][UL])
-				
-		if neighbors[i][DL] != -1:
-			if neighbors[neighbors[i][DL]][UR] != i:
-				print("Incorrect Down Left Neighbor: ", i, ", ", neighbors[neighbors[i][DL]][UR])
+func open_state(state: State, depth: int):
+
+	state.depth = max_depth - depth
+	if depth <= 0:
+		return
+	
+	
+	if state.depth % 2 == 0:
+		state.children = Successor.calculate_successor(state, BoardManager.WHITE)
+	else:
+		state.children = Successor.calculate_successor(state, BoardManager.BLACK)
+	
+	state.children.sort_custom(self, "sort_based_on_pure_eval")
+	for i in range(min(beam_search_k, len(state.children))):
+		var child = state.children[i]
+		open_state(child, depth - 1)
+
+func sort_based_on_pure_eval(a: State, b: State):
+	if a.pure_eval > b.pure_eval:
+		return true
+	return false
+
+func play():
+	time_start = OS.get_ticks_msec()
+	# Play the AI's turn
+	open_state(current_state, max_depth)
+	current_state.evaluate()
+	current_state = current_state.best_child
+	
+	time_now = OS.get_ticks_msec()
+	var time_elapsed = time_now - time_start
+	print(time_elapsed)
+	
+
+	# Add AI state to history
+	history.append(current_state)
+	
+	
+	# Play the Random's turn
+	var res = Successor.calculate_successor(current_state, BoardManager.BLACK)
+	rng.randomize()
+	var rand = rng.randi_range(0, len(res) - 1)
+	current_state = res[rand]
+	
+	# Add random state to history and updating the game
+	history.append(current_state)
+	historyIndex = len(history) - 1
