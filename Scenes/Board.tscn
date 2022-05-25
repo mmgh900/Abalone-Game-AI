@@ -8,8 +8,10 @@
 
 [node name="guard" parent="." index="0"]
 transform = Transform( 9.32709, 0, -5.385, 0, 10.77, 0, 5.385, 0, 9.32709, 0, -0.00892289, 0 )
+use_in_baked_light = true
 material/0 = ExtResource( 2 )
 
 [node name="holes" parent="." index="1"]
 transform = Transform( 15, 0, 0, 0, 15, 0, 0, 0, 15, 0, 0.0920819, 0 )
+use_in_baked_light = true
 material/0 = ExtResource( 3 )

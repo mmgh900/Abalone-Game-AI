@@ -2,12 +2,14 @@ extends Reference
 
 class_name State
 
+var unique_id
 var board = []
 var black_score = 0
 var white_score = 0
 var best_child
 var best_index
 var children = null
+var opened_before = false
 var depth = 0
 var rng = RandomNumberGenerator.new()
 var eval
@@ -35,6 +37,10 @@ func _init(board, black_score, white_score):
 		self.board.append(cell)
 	
 	calculate_pure_eval()
+	
+	unique_id = ""
+	for i in board:
+		unique_id += str(i)
 
 func increase_score(piece):
 	if piece == BoardManager.BLACK:

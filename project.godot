@@ -15,6 +15,11 @@ _global_script_classes=[ {
 "path": "res://Scripts/Move.gd"
 }, {
 "base": "Reference",
+"class": "PieceController",
+"language": "GDScript",
+"path": "res://Scripts/Piece Control.gd"
+}, {
+"base": "Reference",
 "class": "State",
 "language": "GDScript",
 "path": "res://Scripts/State.gd"
@@ -26,6 +31,7 @@ _global_script_classes=[ {
 } ]
 _global_script_class_icons={
 "Move": "",
+"PieceController": "",
 "State": "",
 "Successor": ""
 }
